@@ -1,12 +1,14 @@
 import datetime
 import json
+import csv
 
 massege = """ 1-Add task to a list 
  2-Add tags 
  3-Mark task as complete
  4-View tasks 
  5-Delete task
- 6-Quit """
+ 6-Save tasks to CSV file 
+ 7-Quit """
 
 def load_tasks(file_path):
     try:
@@ -73,9 +75,29 @@ def view_tasks(tasks):
     if not tasks["tasks"]:
         print('No tasks to view.')
         return
+    completed = 0
+    full_tasks = 0
     for i, task in enumerate(tasks["tasks"]):
         status = '✔' if task["status"] else '❌'
+        if task["status"]:
+            completed +=1
+        full_tasks +=1
         print(f'{i+1}. {task["task"]} {status} - added on {task["date"]} with tags: {task["tags"] if task["tags"] else "no tags"}')
+    print(f"tasks : {round((completed/full_tasks)*100)}% completed")
+
+def save_to_csv(tasks, file_path):
+    with open(file_path, 'w', newline='') as csvfile:
+        fieldnames = ['Task', 'Status', 'Date', 'Tags']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
+        for task in tasks["tasks"]:
+            writer.writerow({
+                'Task': task["task"],
+                'Status': 'Completed' if task["status"] else 'Not Completed',
+                'Date': task["date"],
+                'Tags': ', '.join(task["tags"]) if task["tags"] else 'No Tags'
+            })
 
 def body_pro():
     tasks = load_tasks('taskmanger_data.json')
@@ -93,6 +115,8 @@ def body_pro():
         elif choice == '5':
             delete_task(tasks)
         elif choice == '6':
+            save_to_csv(tasks, "tasks.csv")
+        elif choice == '7':
             break
         else:
             print('Invalid choice. Please choose a number from the list.')
